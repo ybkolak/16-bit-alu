@@ -120,7 +120,7 @@ module testbench(
     assign seg = seg_reg;
 
 endmodule
-
+/* mock data
 module alu_tb;
     reg clk;
     reg [15:0] data_in;
@@ -169,4 +169,4 @@ module alu_tb;
         #10000000;
         $finish;
     end
-endmodule
+endmodule */

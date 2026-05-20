@@ -6,11 +6,11 @@
     );
     reg[7:0] registers[15:0];
     reg[7:0] ram[255:0];
-    // debouncer mantıgı kaynak : https://www.youtube.com/watch?v=2dgFvj3WwXk    
+    // debouncer  kaynak : https://www.youtube.com/watch?v=2dgFvj3WwXk    
     reg [1:0] state_reg, state_next;
     parameter s0 = 0, s1 = 1, s2 = 2, s3 = 3;
 
-    
+    // debouncer degiskenleri
     reg [21:0] timer_reg;
     wire timer_done;
     wire timer_reset;
@@ -25,10 +25,10 @@
             timer_reg <= timer_reg + 1;
     end
 
-   
+   // 20ms delay debouncer
     assign timer_done = (timer_reg == 21'd2000000);
 
-    
+    // debouncer durum diyagrami
     always @(*) begin
         state_next = state_reg; 
         
@@ -65,6 +65,8 @@
     assign timer_reset = (state_reg == s0 && state_next == s1) || (state_reg == s2 && state_next == s3);
 
     assign btn_pulsed = (state_reg == s1 && state_next == s2);
+
+    // ALU islemleri
     always @(posedge clk) begin
         if (btn_pulsed) begin
             case(data_in[15:12])

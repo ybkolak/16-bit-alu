@@ -15,6 +15,20 @@ module testbench(
         .btnc(btnc),
         .result(alu_result)
     );
+    wire is_negative;
+    wire [7:0] alu_result_unsigned;
+    assign is_negative = alu_result[7];
+    assign alu_result_unsigned = is_negative ? (~alu_result + 1) : alu_result;
+
+    wire [3:0] bcd_ones;
+    wire [3:0] bcd_tens;
+    wire [3:0] bcd_hundreds;
+
+    assign bcd_ones     = alu_result_unsigned % 10;
+    assign bcd_tens     = (alu_result_unsigned / 10) % 10;
+    assign bcd_hundreds = alu_result_unsigned / 100;
+
+    // displayleri birlikte calistirmak icin refresh counter trick'i
     reg [17:0] refresh_counter = 0;
     
     always @(posedge clk) begin
@@ -25,17 +39,18 @@ module testbench(
     
     reg [3:0] hex_digit;
     reg [3:0] an_reg;
-
+    reg is_minus;
     always @(*) begin
+        is_minus = 1'b0;
         case(active_display)
             2'b00: begin
                 an_reg = 4'b1110;    
-                if(data_in[15:12] == 4'b1110) begin
+                if(data_in[15:12] == 4'b1110) begin 
                     if(alu_result == 8'b00000001) hex_digit = 4'h1;
                     else hex_digit = 4'h0;
                 end           
                 else begin 
-                    hex_digit = alu_result[3:0];         
+                    hex_digit = bcd_ones;         
                 end
             end
             2'b01: begin
@@ -45,22 +60,29 @@ module testbench(
                     else hex_digit = 4'h0;
                 end           
                 else begin
-                    hex_digit = alu_result[7:4];
+                    hex_digit = bcd_tens;
                 end     
             end
             2'b10: begin
                 an_reg = 4'b1011;   
-                if(data_in[15:12] == 4'b1110) begin
+                if(data_in[15:12] == 4'b1110) begin // eger compare durumu var ise soldan 2.display e ozel bir durum gosterme
                     if(alu_result == 8'b01100100) hex_digit = 4'h1;
                     else hex_digit = 4'h0;
                 end        
                 else begin    
-                    hex_digit = 4'b0000;            
+                    hex_digit = bcd_hundreds;            
                 end     
             end
             2'b11: begin
-                an_reg = 4'b1111;                
-                hex_digit = 4'b0000;
+                if(is_negative) begin
+                    an_reg = 4'b0111; 
+                    is_minus = 1'b1;
+                    hex_digit = 4'h0; 
+                end
+                else begin
+                    an_reg = 4'b1111;
+                    hex_digit = 4'h0;
+                end
             end
         endcase
     end
@@ -69,6 +91,10 @@ module testbench(
 
     reg [6:0] seg_reg;
     always @(*) begin
+        if(is_minus) begin
+            seg_reg = 7'b0111111; 
+        end
+        else begin
         case(hex_digit)
             4'h0: seg_reg = 7'b1000000; // 0
             4'h1: seg_reg = 7'b1111001; // 1
@@ -88,6 +114,7 @@ module testbench(
             4'hF: seg_reg = 7'b0001110; // f
             default: seg_reg = 7'b1111111; 
         endcase
+        end
     end
 
     assign seg = seg_reg;

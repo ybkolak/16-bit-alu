@@ -127,9 +127,9 @@
                     result <= registers[data_in[11:8]] >> 1;
                 end
                 4'b1110: begin
-                    if(registers[data_in[11:8]] > registers[data_in[7:4]]) begin
+                    if($signed(registers[data_in[11:8]]) > $signed(registers[data_in[7:4]])) begin
                             result <= 8'b01100100;
-                        end else if (registers[data_in[11:8]] < registers[data_in[7:4]]) begin
+                        end else if ($signed(registers[data_in[11:8]]) < $signed(registers[data_in[7:4]])) begin
                             result <= 8'b00000001;
                         end else begin
                             result <= 8'b00001010;
